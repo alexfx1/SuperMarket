@@ -1,0 +1,21 @@
+# Use the official .NET SDK image as the base image
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /app
+
+# Copy the project file and restore the dependencies
+COPY *.sln ./
+COPY SPMK.Api/*.csproj ./SPMK.Api/
+COPY SPMK.Core/*.csproj ./SPMK.Core/
+COPY SPMK.Infra/*.csproj ./SPMK.Infra/
+COPY SPMK.UseCase/*.csproj ./SPMK.UseCase/
+RUN dotnet restore
+
+# Copy the source code and build the application
+COPY . ./
+RUN dotnet publish -c Release -o out
+
+# Use the official ASP.NET runtime image as the base image
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/out ./
+ENTRYPOINT ["dotnet", "SPMK.Api.dll"]
